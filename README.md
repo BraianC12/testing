@@ -1,11 +1,10 @@
-```markdown
-# 🔨 SubastaYa - Plataforma de Subastas en Tiempo Real
+# SubastaYa - Plataforma de Subastas en Tiempo Real
 
 **SubastaYa** es un sistema integral de subastas en línea en tiempo real desarrollado bajo una arquitectura limpia (Clean Architecture) y modular en **.NET 8** para el Backend y **React 19 + Vite** para el Frontend. Incorpora mecanismos de concurrencia optimista (*Optimistic Locking*), actualización de pujas en tiempo real vía **SignalR (WebSockets)**, sistema de billetera con transacciones auditables (*Ledger*) y reglas de negocio como *Anti-Sniping*.
 
 ---
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 1. [Arquitectura del Proyecto y Paquetes](#-arquitectura-del-proyecto-y-paquetes-instalados)
 2. [Prerrequisitos](#-prerrequisitos)
 3. [Guía Paso a Paso de Instalación y Ejecución](#-guía-paso-a-paso-de-instalación-y-ejecución)
@@ -23,11 +22,11 @@
 
 ---
 
-## 🏗 Arquitectura del Proyecto y Paquetes Instalados
+## Arquitectura del Proyecto y Paquetes Instalados
 
 El proyecto está estructurado siguiendo los principios de **Clean Architecture**, distribuyendo las dependencias y paquetes de NuGet/NPM en cada capa:
 
-### 📦 Backend (.NET 8)
+### Backend (.NET 8)
 
 - **`Domain/`**
   - Contiene las entidades principales (`Subasta`, `Puja`, `Billetera`, `Usuario`, `Categoria`, `Transaccion_Ledger`, `Auditoria_Log`) y excepciones de dominio.
@@ -55,7 +54,7 @@ El proyecto está estructurado siguiendo los principios de **Clean Architecture*
 - **`TestConcurrencia/`**
   - Aplicación de consola diseñada para simular tráfico masivo simultáneo y comprobar el bloqueo optimista.
 
-### 🌐 Frontend (React + Vite)
+### Frontend (React + Vite)
 
 - **`Frontend/`**
   - Single Page Application (SPA) para la interfaz de usuario de subastas, pujas en vivo y administración de billetera.
@@ -66,7 +65,7 @@ El proyecto está estructurado siguiendo los principios de **Clean Architecture*
 
 ---
 
-## ⚙️ Prerrequisitos
+## Prerrequisitos
 
 Asegúrate de contar con el siguiente software instalado en tu equipo antes de comenzar:
 
@@ -80,7 +79,7 @@ Asegúrate de contar con el siguiente software instalado en tu equipo antes de c
 
 ---
 
-## 🚀 Guía Paso a Paso de Instalación y Ejecución
+## Guía Paso a Paso de Instalación y Ejecución
 
 ### 1. Configuración de la Base de Datos
 
@@ -119,9 +118,6 @@ Aplica las migraciones pendientes con EF Core para crear la base de datos `Subas
 ```bash
 dotnet ef database update --project Infraestructure --startup-project SubastaYa
 ```
-
-> **Nota:** El DbContext precarga de forma automática usuarios de prueba, billeteras con saldo disponible y subastas activas (por ejemplo, la subasta con `Id: 6`).
-
 ---
 
 ### 4. Lanzar la Aplicación Backend
@@ -134,7 +130,6 @@ dotnet run --project SubastaYa
 
 El servidor quedará en ejecución en:
 - **HTTPS:** `https://localhost:7117`
-- **HTTP:** `http://localhost:5100`
 - **Documentación Swagger UI:** `https://localhost:7117/swagger`
 
 ---
@@ -156,13 +151,48 @@ El servidor quedará en ejecución en:
 4. Abre tu navegador e ingresa a:
    - **URL Local:** `http://localhost:5173`
 
-> ⚠️ **Importante sobre Puertos y Terminales:**
-> - El Backend corre por defecto en `https://localhost:7117`. Si modificas los puertos en `SubastaYa/Properties/launchSettings.json` o en `SubastaYa/Program.cs` (CORS), asegúrate de actualizar la URL base en el Frontend y en el script de pruebas.
-> - **Si tienes varias terminales abiertas o puertos bloqueados:** Cierra todas las terminales activas de Node y .NET, asegúrate de liberar los puertos `7117` y `5173`, y vuelve a arrancar tanto el Backend como el Frontend en terminales limpias.
-
+> ⚠️ **Importante sobre Configuración de Puertos y Terminales:**
+>
+> - **Si el Frontend se levanta en otro puerto (ej. `http://localhost:5174`):**
+>   - Vite puede seleccionar automáticamente un puerto alternativo (como el `5174`) si el `5173` ya está en uso por otro proceso.
+>   - Para evitar errores de **CORS (Cross-Origin Resource Sharing)** en el navegador, debes abrir el archivo `SubastaYa/Program.cs` y registrar el nuevo origen en la configuración de CORS:
+>     ```csharp
+>     builder.Services.AddCors(options =>
+>     {
+>         options.AddPolicy("AllowReactApp", policy =>
+>         {
+>             policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // <-- Agregar el puerto aquí
+>                   .AllowAnyHeader()
+>                   .AllowAnyMethod()
+>                   .AllowCredentials();
+>         });
+>     });
+>     ```
+>   - Si prefieres fijar el puerto del Frontend para que siempre use el `5173`, puedes configurarlo en `Frontend/vite.config.js`:
+>     ```javascript
+>     export default defineConfig({
+>       plugins: [react()],
+>       server: {
+>         port: 5173
+>       }
+>     })
+>     ```
+>
+> - **Si el Backend cambia de puerto (por defecto `https://localhost:7117`):**
+>   - Si modificas el puerto del Backend en `SubastaYa/Properties/launchSettings.json`, debes actualizar la URL base en el Frontend abriendo el archivo `Frontend/src/settings/appsettings.jsx`:
+>     ```javascript
+>     export const appsettings = {
+>         apiUrl: "https://localhost:<TU_PUERTO>/api/",
+>         hubUrl: "https://localhost:<TU_PUERTO>/subastaHub"
+>     };
+>     ```
+>   - Y también en la variable `apiUrl` dentro de `TestConcurrencia/Program.cs`.
+>
+> - **Si tienes varias terminales abiertas o puertos bloqueados:**
+>   - Cierra todas las terminales activas de Node y .NET para asegurarte de liberar los puertos `7117` y `5173`, y vuelve a arrancar tanto el Backend como el Frontend en terminales limpias.
 ---
 
-## 🛡 Demostración y Testing de Concurrencia Optimista
+## Demostración y Testing de Concurrencia Optimista
 
 ### ¿Cómo funciona la Concurrencia Optimista en SubastaYa?
 
@@ -293,7 +323,7 @@ Si deseas ejecutar el test de concurrencia sobre una subasta diferente, abre el 
 
 ---
 
-## 👥 Cuentas de Prueba
+## Cuentas de Prueba
 
 El sistema incluye los siguientes usuarios precargados en el seed de datos (contraseña de todos los usuarios: `123456`):
 
@@ -306,8 +336,8 @@ El sistema incluye los siguientes usuarios precargados en el seed de datos (cont
 
 ---
 
-## ✍️ Autores
-
+## Autores
 - **Tronando Tomas**
 - **Carranza Braian**
-```
+
+**Universidad Arturo Jauretche (UNAJ) - Proyecto Software - 2do Cuatrimestre 2026**
