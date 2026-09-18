@@ -66,12 +66,6 @@ Por defecto, la cadena de conexión apunta a una instancia local de SQL Server E
        "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=SubastaYaDb;Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True"
      }
    }
-   ```
-   > **Tip si usas Docker**: Puedes levantar una instancia de SQL Server rápidamente con:
-   > ```bash
-   > docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TuPasswordSeguro123!" -p 1433:1433 --name subastaya-sql -d mcr.microsoft.com/mssql/server:2022-latest
-   > ```
-   > En ese caso, actualiza la cadena a: `"Server=localhost,1433;Database=SubastaYaDb;User Id=sa;Password=TuPasswordSeguro123!;TrustServerCertificate=True"`
 
 ---
 
